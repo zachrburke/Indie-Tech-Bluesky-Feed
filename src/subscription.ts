@@ -12,18 +12,29 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     // This logs the text of every post off the firehose.
     // Just for fun :)
     // Delete before actually using
-    for (const post of ops.posts.creates) {
-      console.log(post.record.text)
-    }
+    // for (const post of ops.posts.creates) {
+    //   console.log(post.record.text)
+    // }
 
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
-        // only alf-related posts
-        return create.record.text.toLowerCase().includes('alf')
+        // Only matched posts
+        const matched = create.record.text.toLowerCase().includes('hello world') ||
+          create.record.text.toLowerCase().includes('hello, world') || 
+          create.record.text.toLowerCase().includes('ola mundo') ||
+          create.record.text.toLowerCase().includes('ola, mundo')
+        if (matched) {
+          const split = create.uri.split("/");
+          // https://github.com/bluesky-social/atproto/discussions/2523
+          const url = `https://bsky.app/profile/${split[2]}/post/${split[split.length - 1]}`
+          console.log(url);
+          console.log(create.record.text)
+        }
+        return matched
       })
       .map((create) => {
-        // map alf-related posts to a db row
+        // Map matched posts to a db row
         return {
           uri: create.uri,
           cid: create.cid,
