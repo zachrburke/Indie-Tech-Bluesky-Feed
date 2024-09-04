@@ -64,6 +64,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
       })
       .map((create) => {
         // Map matched posts to a db row
+        // console.dir(create);
         return {
           uri: create.uri,
           cid: create.cid,

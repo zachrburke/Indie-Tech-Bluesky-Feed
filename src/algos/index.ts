@@ -3,7 +3,7 @@ import {
   QueryParams,
   OutputSchema as AlgoOutput,
 } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import * as vibesAlgo from './vibes-algo'
+import * as vibesAlgo from './vibes'
 
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams) => Promise<AlgoOutput>

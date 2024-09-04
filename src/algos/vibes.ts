@@ -5,7 +5,16 @@ import { AppContext } from '../config'
 export const shortname = "vibes";
 
 export const handler = async (ctx: AppContext, params: QueryParams) => {
-  console.log('vibes-algo handler', params)
+  let getItAll = ctx.db
+    .selectFrom('post')
+    .selectAll();
+    
+  const response = await getItAll.execute();
+  for (const row of response) {
+    console.log(row);
+  }
+
+
   let builder = ctx.db
     .selectFrom('post')
     .selectAll()
