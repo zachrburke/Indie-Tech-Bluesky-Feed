@@ -16,20 +16,49 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     //   console.log(post.record.text)
     // }
 
+    const keywords = [
+      "hello world",
+      "hello, world",
+      "ola mundo",
+      "ola, mundo",
+      "developers",
+      "#opensource",
+      "#gamedev",
+      "#indiedev",
+      "#webdev",
+      "#programming",
+      "#coding",
+      "#foss",
+      "#ux",
+      "#ui",
+      "#design",
+      "open source",
+      "i developed",
+      "#hardware",
+      "#software",
+      "hi"
+    ];
+
+    const negativeKeywords = [
+      "#art",
+      "#drawing",
+      "#sketch",
+    ];
+    
+
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
         // Only matched posts
-        const matched = create.record.text.toLowerCase().includes('hello world') ||
-          create.record.text.toLowerCase().includes('hello, world') || 
-          create.record.text.toLowerCase().includes('ola mundo') ||
-          create.record.text.toLowerCase().includes('ola, mundo')
+        const matched = keywords.some(keyword => create.record.text.toLowerCase().includes(keyword))
+          && !negativeKeywords.some(keyword => create.record.text.toLowerCase().includes(keyword))
         if (matched) {
           const split = create.uri.split("/");
           // https://github.com/bluesky-social/atproto/discussions/2523
           const url = `https://bsky.app/profile/${split[2]}/post/${split[split.length - 1]}`
-          console.log(url);
-          console.log(create.record.text)
+          // console.log("--------------------------------------------------------");
+          // console.log(url);
+          // console.log(create.record.text);
         }
         return matched
       })
