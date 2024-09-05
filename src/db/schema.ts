@@ -6,8 +6,9 @@ export type DatabaseSchema = {
 export type Post = {
   uri: string
   cid: string
-  indexedAt: string
+  first_indexed: number
   score: number
+  last_scored: number
 }
 
 export type SubState = {

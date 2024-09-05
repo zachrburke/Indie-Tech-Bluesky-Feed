@@ -42,7 +42,11 @@ export abstract class FirehoseSubscriptionBase {
         try {
           await this.handleEvent(evt)
         } catch (err) {
-          console.error('repo subscription could not handle message', err)
+          if (err.message === "Could not decode varint") {
+            // https://github.com/skyware-js/firehose/issues/1
+          } else {
+            console.error('repo subscription could not handle message', err)
+          }
         }
         // update stored cursor every 20 events or so
         if (isCommit(evt) && evt.seq % 20 === 0) {
