@@ -2,6 +2,7 @@ import http from 'http'
 import events from 'events'
 import express from 'express'
 import { DidResolver, MemoryCache } from '@atproto/identity'
+import { BskyAgent } from '@atproto/api'
 import { createServer } from './lexicon'
 import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
@@ -29,7 +30,10 @@ export class FeedGenerator {
     this.cfg = cfg
   }
 
-  static create(cfg: Config) {
+static async create(cfg: Config) {
+    // Get secrets from secrets.json
+    const secrets = require('./secrets.json')
+
     const app = express()
     const db = createDb(cfg.sqliteLocation)
     const firehose = new FirehoseSubscription(db, cfg.subscriptionEndpoint)
@@ -53,7 +57,17 @@ export class FeedGenerator {
       didResolver,
       cfg,
     }
-    feedGeneration(server, ctx)
+
+    const agent = new BskyAgent({
+      service: "https://bsky.social"
+    });
+
+    await agent.login({
+      identifier: secrets.identifier,
+      password: secrets.password
+    });
+    
+    feedGeneration(server, ctx, agent);
     describeGenerator(server, ctx)
     app.use(server.xrpc.router)
     app.use(wellKnown(ctx))

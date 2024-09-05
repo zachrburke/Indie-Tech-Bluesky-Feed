@@ -1,3 +1,4 @@
+import { BskyAgent } from '@atproto/api'
 import { AppContext } from '../config'
 import {
   QueryParams,
@@ -6,7 +7,7 @@ import {
 import * as vibesAlgo from './vibes'
 
 
-type AlgoHandler = (ctx: AppContext, params: QueryParams) => Promise<AlgoOutput>
+type AlgoHandler = (ctx: AppContext, params: QueryParams, agent: BskyAgent) => Promise<AlgoOutput>
 
 const algos: Record<string, AlgoHandler> = {
   [vibesAlgo.shortname]: vibesAlgo.handler,

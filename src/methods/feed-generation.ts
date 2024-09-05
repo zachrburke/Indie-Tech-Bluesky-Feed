@@ -4,8 +4,9 @@ import { AppContext } from '../config'
 import algos from '../algos'
 import { validateAuth } from '../auth'
 import { AtUri } from '@atproto/syntax'
+import { BskyAgent } from '@atproto/api'
 
-export default function (server: Server, ctx: AppContext) {
+export default function (server: Server, ctx: AppContext, agent: BskyAgent) {
   server.app.bsky.feed.getFeedSkeleton(async ({ params, req }) => {
     const feedUri = new AtUri(params.feed)
     const algo = algos[feedUri.rkey]
@@ -29,7 +30,7 @@ export default function (server: Server, ctx: AppContext) {
      * )
      */
 
-    const body = await algo(ctx, params)
+    const body = await algo(ctx, params, agent)
     return {
       encoding: 'application/json',
       body: body,
