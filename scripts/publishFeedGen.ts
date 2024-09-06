@@ -8,28 +8,29 @@ const run = async () => {
 
   // YOUR bluesky handle
   // Ex: user.bsky.social
-  const handle = ''
+  const handle = 'idreesinc.com'
 
   // YOUR bluesky password, or preferably an App Password (found in your client settings)
   // Ex: abcd-1234-efgh-5678
-  const password = ''
+  const secrets = require('../src/secrets.json');
+  const password = secrets.password;
 
   // A short name for the record that will show in urls
   // Lowercase with no spaces.
   // Ex: whats-hot
-  const recordName = ''
+  const recordName = 'tech-vibes'
 
   // A display name for your feed
   // Ex: What's Hot
-  const displayName = ''
+  const displayName = 'Indie Tech Vibes'
 
   // (Optional) A description of your feed
   // Ex: Top trending content from the whole network
-  const description = ''
+  const description = 'Your one stop shop for indie open-source vibes, curating projects from all over and parsing them with a specially-made algorithm! 💽✨\nWIP, check back soon and follow @idreesinc for updates!'
 
   // (Optional) The path to an image to be used as your feed's avatar
   // Ex: ~/path/to/avatar.jpeg
-  const avatar: string = ''
+  const avatar: string = './avatar.png'
 
   // -------------------------------------
   // NO NEED TO TOUCH ANYTHING BELOW HERE
@@ -38,6 +39,7 @@ const run = async () => {
   if (!process.env.FEEDGEN_SERVICE_DID && !process.env.FEEDGEN_HOSTNAME) {
     throw new Error('Please provide a hostname in the .env file')
   }
+  console.log(process.env.FEEDGEN_HOSTNAME)
   const feedGenDid =
     process.env.FEEDGEN_SERVICE_DID ?? `did:web:${process.env.FEEDGEN_HOSTNAME}`
 

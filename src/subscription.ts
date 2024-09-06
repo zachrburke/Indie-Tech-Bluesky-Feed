@@ -7,7 +7,6 @@ import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   SETTINGS_PATH = "./settings.json";
-  MAX_POSTS = 500;
 
   count = 0;
   settings = require(this.SETTINGS_PATH);
@@ -35,7 +34,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
       .filter((create) => {
         // Only matched posts
         const matched = !create.record.reply && (!create.record.langs || create.record.langs?.includes("en"))
-          && this.count < this.MAX_POSTS && this.keywords.some(keyword => create.record.text.toLowerCase().includes(keyword))
+          && this.keywords.some(keyword => create.record.text.toLowerCase().includes(keyword))
           && !this.negativeKeywords.some(keyword => create.record.text.toLowerCase().includes(keyword));
         if (matched) {
           this.count++;

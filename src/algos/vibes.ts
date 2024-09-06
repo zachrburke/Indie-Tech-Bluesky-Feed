@@ -59,7 +59,8 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
       }))
       .execute();
   }
-  logPosts(ctx, agent, 10);
+  console.log("Finished refreshing scores at: " + new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
+  // logPosts(ctx, agent, 10);
 }
 
 function uriToUrl(uri: string) {
@@ -102,15 +103,22 @@ async function logPosts(ctx: AppContext, agent: BskyAgent, limit: number) {
 }
 
 // max 15 chars
-export const shortname = "vibes";
+export const shortname = "tech-vibes";
 
 export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyAgent) => {
+
+  // Schedule a refresh of scores every 15 minutes
+  setInterval(() => {
+    refreshScores(ctx, agent);
+  }, 1000 * 60 * 15);
+
   // Trigger a refresh asynchronously
   refreshScores(ctx, agent);
   
   let builder = ctx.db
     .selectFrom('post')
     .selectAll()
+    .where('score', '>', 0)
     .orderBy('score', 'desc')
     .orderBy('first_indexed', 'desc')
     .limit(params.limit)
@@ -120,10 +128,10 @@ export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyA
   }
   const res = await builder.execute()
 
-  for (const row of res) {
-    console.log(row);
-    console.log(uriToUrl(row.uri));
-  }
+  // for (const row of res) {
+  //   console.log(row);
+  //   console.log(uriToUrl(row.uri));
+  // }
 
   const feed = res.map((row) => ({
     post: row.uri,
@@ -134,6 +142,8 @@ export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyA
   if (last) {
     cursor = last.first_indexed + "";
   }
+
+  console.log("Responding to request with " + feed.length + " posts");
 
   return {
     cursor,
