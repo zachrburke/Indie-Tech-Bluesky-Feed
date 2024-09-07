@@ -178,8 +178,6 @@ export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyA
     });
   }
 
-  console.dir(feed);
-
   let cursor: string | undefined
   const last = res.at(-1)
   if (last) {
