@@ -66,16 +66,18 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
   // logPosts(ctx, agent, 10);
 }
 
-// function deleteOldPosts(ctx: AppContext) {
-//   // Delete all posts older than 1 day with a score less than 0.1
-//   const currentTime = Date.now();
-//   const ONE_DAY = 1000 * 60 * 60 * 24;
-//   let builder = ctx.db
-//     .selectFrom('post')
-//     .selectAll()
-//     .where('first_indexed', '<', currentTime - ONE_DAY)
-//     .where('score', '<', 0.1)
-  
+async function deleteStalePosts(ctx: AppContext) {
+  // Delete all posts in the db older than 2 days with a score less than 0.1
+  log.red("Deleting stale posts...");
+  const currentTime = Date.now();
+  const TWO_DAYS = 1000 * 60 * 60 * 24 * 2;
+  // const TEN_SECONDS = 1000 * 10;
+  let builder = ctx.db
+    .deleteFrom('post')
+    .where('first_indexed', '<', currentTime - TWO_DAYS)
+    .where('score', '<', 0.1)
+  await builder.execute();
+}
 
 function uriToUrl(uri: string) {
   const split = uri.split("/");
@@ -116,15 +118,27 @@ async function logPosts(ctx: AppContext, agent: BskyAgent, limit: number) {
   }
 }
 
+let intervalsScheduled = false;
+
 // max 15 chars
 export const shortname = "tech-vibes";
 
 export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyAgent) => {
 
-  // Schedule a refresh of scores every 15 minutes
-  setInterval(() => {
-    refreshScores(ctx, agent);
-  }, 1000 * 60 * 15);
+  if (!intervalsScheduled) {
+    log.yellow("Scheduling intervals...");
+    // Schedule a refresh of scores every 15 minutes
+    setInterval(() => {
+      refreshScores(ctx, agent);
+    }, 1000 * 60 * 15);
+
+    // Schedule a cleanup of stale posts every 2 hours
+    setInterval(() => {
+      deleteStalePosts(ctx);
+    }, 1000 * 60 * 60 * 2);
+
+    intervalsScheduled = true;
+  }
 
   // Trigger a refresh asynchronously
   refreshScores(ctx, agent);
