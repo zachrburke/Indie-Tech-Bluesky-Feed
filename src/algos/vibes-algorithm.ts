@@ -118,10 +118,16 @@ async function logPosts(ctx: AppContext, agent: BskyAgent, limit: number) {
   }
 }
 
-let intervalsScheduled = false;
 
 // max 15 chars
 export const shortname = "tech-vibes";
+
+// TODO: Move this to settings.json in the future
+const pinnedPosts = [
+  "at://did:plc:xcariuurag22domm7jgn4goj/app.bsky.feed.post/3l3lbsbqqqi2o"
+];
+let intervalsScheduled = false;
+
 
 export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyAgent) => {
 
@@ -164,6 +170,15 @@ export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyA
   const feed = res.map((row) => ({
     post: row.uri,
   }))
+
+  // Add pinned posts to top of feed
+  for (const post of pinnedPosts) {
+    feed.unshift({
+      "post": post
+    });
+  }
+
+  console.dir(feed);
 
   let cursor: string | undefined
   const last = res.at(-1)
