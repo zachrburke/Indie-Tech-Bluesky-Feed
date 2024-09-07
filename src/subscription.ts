@@ -92,7 +92,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
           cid: create.cid,
           first_indexed: now,
           score: 0,
-          last_scored: now,
+          last_scored: 0,
           mod: mod,
         }
       })

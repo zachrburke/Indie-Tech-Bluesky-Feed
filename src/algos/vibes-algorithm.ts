@@ -16,7 +16,7 @@ function calculateScore(timeInHours: number, likes: number) {
 
 async function refreshScores(ctx: AppContext, agent: BskyAgent) {
   // Go through the database and calculate likes for each post
-  const MIN_DELAY = 1000 * 60; // 1 minute
+  const MIN_DELAY = 1000 * 60; // 2 minute
   const currentTime = Date.now();
   let builder = ctx.db
     .selectFrom('post')
@@ -36,8 +36,8 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
       return null;
     });
     if (post == null) {
-      console.error("Failed to get post, deleting: " + row.uri);
-      await deletePost(ctx, row.uri);
+      // console.error("Failed to get post, deleting: " + row.uri);
+      // await deletePost(ctx, row.uri);
       continue;
     }
     const likeCount = (<any>post.data.thread.post)?.likeCount as number ?? 0;
