@@ -1,11 +1,11 @@
 {
-  "name": "feed-generator",
+  "name": "indie-tech-vibes-feed",
   "version": "1.0.0",
-  "description": "atproto feed generator starter kit",
+  "description": "The service that generates the Indie Tech Vibes feed",
   "main": "index.js",
-  "repository": "git@github.com:bluesky-social/feed-generator.git",
-  "author": "dholms <dtholmgren@gmail.com>",
-  "license": "MIT",
+  "repository": "https://github.com/IdreesInc/Indie-Tech-Bluesky-Feed",
+  "author": "Idrees Hassan",
+  "license": "GPL-3.0",
   "packageManager": "yarn@1.22.22",
   "scripts": {
     "publishFeed": "ts-node scripts/publishFeedGen.ts",
@@ -25,7 +25,8 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "kysely": "^0.22.0",
-    "multiformats": "^9.9.0"
+    "multiformats": "^9.9.0",
+    "newrelic": "^12.3.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.4",
