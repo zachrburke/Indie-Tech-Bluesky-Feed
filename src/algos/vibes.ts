@@ -43,15 +43,16 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
     const likeCount = (<any>post.data.thread.post)?.likeCount as number ?? 0;
     const repostCount = (<any>post.data.thread.post)?.repostCount as number ?? 0;
     const indexedTime = row.first_indexed;
-    const score = calculateScore((currentTime - indexedTime) / 1000 / 60 / 60, likeCount + repostCount);
-    console.log("Updating score for post: " + row.uri + " to " + score);
+    const score = calculateScore((currentTime - indexedTime) / 1000 / 60 / 60, likeCount + repostCount + row.mod);
+    // console.log("Updating score for post: " + row.uri + " to " + score);
     await ctx.db.insertInto('post')
       .values({
         uri: row.uri,
         cid: row.cid,
         first_indexed: indexedTime,
         score: score,
-        last_scored: currentTime
+        last_scored: currentTime,
+        mod: row.mod
       })
       .onConflict((oc) => oc.doUpdateSet({
         score: score,
@@ -59,9 +60,22 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
       }))
       .execute();
   }
-  console.log("Finished refreshing scores at: " + new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
+  if (res.length > 0) {
+    console.log("Updated " + res.length + " score(s) at: " + new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
+  }
   // logPosts(ctx, agent, 10);
 }
+
+// function deleteOldPosts(ctx: AppContext) {
+//   // Delete all posts older than 1 day with a score less than 0.1
+//   const currentTime = Date.now();
+//   const ONE_DAY = 1000 * 60 * 60 * 24;
+//   let builder = ctx.db
+//     .selectFrom('post')
+//     .selectAll()
+//     .where('first_indexed', '<', currentTime - ONE_DAY)
+//     .where('score', '<', 0.1)
+  
 
 function uriToUrl(uri: string) {
   const split = uri.split("/");

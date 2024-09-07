@@ -8,7 +8,8 @@ export type Post = {
   cid: string
   first_indexed: number
   score: number
-  last_scored: number
+  last_scored: number,
+  mod: number
 }
 
 export type SubState = {

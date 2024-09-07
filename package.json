@@ -6,10 +6,12 @@
   "repository": "git@github.com:bluesky-social/feed-generator.git",
   "author": "dholms <dtholmgren@gmail.com>",
   "license": "MIT",
+  "packageManager": "yarn@1.22.22",
   "scripts": {
     "publishFeed": "ts-node scripts/publishFeedGen.ts",
     "start": "ts-node src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "mocha test/test.ts"
   },
   "dependencies": {
     "@atproto/api": "^0.6.20",
@@ -29,7 +31,10 @@
     "@types/better-sqlite3": "^7.6.4",
     "@types/express": "^4.17.17",
     "@types/node": "^20.1.2",
-    "ts-node": "^10.9.1",
+    "chai": "^5.1.1",
+    "mocha": "^10.7.3",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.0",
     "typescript": "^5.0.4"
   }
 }

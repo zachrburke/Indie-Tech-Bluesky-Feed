@@ -17,6 +17,7 @@ migrations['001'] = {
       .addColumn('first_indexed', 'integer', (col) => col.notNull())
       .addColumn('score', 'integer', (col) => col.notNull())
       .addColumn('last_scored', 'integer', (col) => col.notNull())
+      .addColumn('mod', 'integer', (col) => col.notNull())
       .execute()
     await db.schema
       .createTable('sub_state')
