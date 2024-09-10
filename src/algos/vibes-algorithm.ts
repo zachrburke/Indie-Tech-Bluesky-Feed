@@ -3,12 +3,6 @@ import { AppContext } from '../config'
 import { BskyAgent } from '@atproto/api';
 import { log } from 'console-log-colors';
 
-async function deletePost(ctx: AppContext, uri: string) {
-  await ctx.db.deleteFrom('post')
-    .where('uri', '=', uri)
-    .execute()
-}
-
 function calculateScore(timeInHours: number, likes: number) {
   // Hacker News algorithm
   return likes / Math.pow(timeInHours + 2, 1.8);
@@ -16,7 +10,7 @@ function calculateScore(timeInHours: number, likes: number) {
 
 async function refreshScores(ctx: AppContext, agent: BskyAgent) {
   // Go through the database and calculate likes for each post
-  const MIN_DELAY = 1000 * 60; // 2 minute
+  const MIN_DELAY = 1000 * 60 * 6; // 6 minutes
   const currentTime = Date.now();
   let builder = ctx.db
     .selectFrom('post')
@@ -28,11 +22,13 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
 
   for (const row of res) {
     // console.dir(row);
+    let errorStatus = 0;
     const post = await agent.getPostThread({
       uri: row.uri,
       depth: 1,
     }).catch((err) => {
       console.error(err);
+      errorStatus = err.status;
       return null;
     });
     if (post == null) {
@@ -124,7 +120,7 @@ export const shortname = "tech-vibes";
 
 // TODO: Move this to settings.json in the future
 const pinnedPosts = [
-  "at://did:plc:xcariuurag22domm7jgn4goj/app.bsky.feed.post/3l3lbsbqqqi2o"
+  "at://did:plc:xcariuurag22domm7jgn4goj/app.bsky.feed.post/3l3oqdmsr272m"
 ];
 let intervalsScheduled = false;
 

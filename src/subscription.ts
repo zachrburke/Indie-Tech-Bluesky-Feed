@@ -67,6 +67,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const postsToCreate = ops.posts.creates
       .filter((create) => {
         let match = !create.record.reply && (!create.record.langs || create.record.langs?.includes("en"));
+        const numberOfHashtags = (create.record.text.match(/#/g) || []).length;
+        match = match && numberOfHashtags <= 6;
         if (match) {
           match = hasMatch(create.record.text, this.keywords, this.partialKeywords, this.negativeKeywords);
         }
