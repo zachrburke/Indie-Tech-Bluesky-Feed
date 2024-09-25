@@ -3,6 +3,38 @@ import {
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
+import axios from 'axios';
+
+const POST_METRIC = "bluesky.feed.eligiblePosts";
+const TOTAL_POSTS_METRIC = "bluesky.feed.totalPosts";
+
+async function incrementMetric(secrets: any, metric: String, value: number = 1, interval: number = 1) {
+  console.log("Incrementing metric: " + metric + " by " + value);
+  const url = 'https://metric-api.newrelic.com/metric/v1';
+  const apiKey = secrets.newrelicKey;
+  const data = [{
+      "metrics": [{
+          "name": metric,
+          "type": "count",
+          "value": value,
+          "timestamp": Date.now(),
+          "interval.ms": interval
+      }]
+  }];
+
+  try {
+      const response = await axios.post(url, data, {
+          headers: {
+              'Content-Type': 'application/json',
+              'Api-Key': apiKey,
+          },
+          httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false }) // This corresponds to the -k option in curl
+      });
+      // console.log('New Relic post response:', response.data);
+  } catch (error) {
+      console.error('Error posting New Relic metric:', error);
+  }
+}
 
 function hasMatch(text: string, keywords: string[], partialKeywords: string[], negativeKeywords: string[]) {
   const multipleSpaces = / {2,}/g;
@@ -35,14 +67,18 @@ export { hasMatch };
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   SETTINGS_PATH = "./settings.json";
+  SECRETS_PATH = "./secrets.json";
 
-  count = 0;
+  matchedCount = 0;
+  totalPostsCounter = 0;
   settings = require(this.SETTINGS_PATH);
+  secrets = require(this.SECRETS_PATH);
   keywords: string[] = [];
   partialKeywords: string[] = [];
   negativeKeywords: string[] = [];
   boostedKeywords: { [key: string]: number } = {};
   settingsLastUpdated = 0;
+  totalCountMetricLastUpdated = 0;
 
   async updateSettings() {
     this.settingsLastUpdated = Date.now();
@@ -59,6 +95,11 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     if (Date.now() - this.settingsLastUpdated > 10000) {
       await this.updateSettings();
     }
+    if (Date.now() - this.totalCountMetricLastUpdated > 60000) {
+      this.totalCountMetricLastUpdated = Date.now();
+      incrementMetric(this.secrets, TOTAL_POSTS_METRIC, this.totalPostsCounter, 60000);
+      this.totalPostsCounter = 0;
+    }
 
     if (!isCommit(evt)) return
     const ops = await getOpsByType(evt)
@@ -66,6 +107,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
+        this.totalPostsCounter++;
         let match = !create.record.reply && (!create.record.langs || create.record.langs?.includes("en"));
         const numberOfHashtags = (create.record.text.match(/#/g) || []).length;
         match = match && numberOfHashtags <= 6;
@@ -73,14 +115,15 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
           match = hasMatch(create.record.text, this.keywords, this.partialKeywords, this.negativeKeywords);
         }
         if (match) {
-          this.count++;
+          incrementMetric(this.secrets, POST_METRIC);
+          this.matchedCount++;
           const split = create.uri.split("/");
           // https://github.com/bluesky-social/atproto/discussions/2523
           const url = `https://bsky.app/profile/${split[2]}/post/${split[split.length - 1]}`
           // console.log("--------------------------------------------------------");
           console.log(url);
           console.log(create.record.text);
-          console.log(this.count);
+          console.log(this.matchedCount);
         }
         return match
       })

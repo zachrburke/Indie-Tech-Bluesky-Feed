@@ -2,13 +2,57 @@ import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../config'
 import { BskyAgent } from '@atproto/api';
 import { log } from 'console-log-colors';
+import axios from 'axios';
+
+// max 15 chars
+export const shortname = "tech-vibes";
+
+const SETTINGS_PATH = "../settings.json";
+const SECRETS_PATH = "../secrets.json";
+const REQUEST_METRIC = "bluesky.feed.request";
+const REFRESH_METRIC = "bluesky.feed.refresh";
+
+const settings = require(SETTINGS_PATH);
+const secrets = require(SECRETS_PATH);
+
+const pinnedPosts = settings.pinnedPosts;
+let intervalsScheduled = false;
+
+async function incrementMetric(metric: String, value: number = 1) {
+  console.log("Incrementing metric: " + metric + " by " + value);
+  const url = 'https://metric-api.newrelic.com/metric/v1';
+  const apiKey = secrets.newrelicKey;
+  const data = [{
+      "metrics": [{
+          "name": metric,
+          "type": "count",
+          "value": value,
+          "timestamp": Date.now(),
+          "interval.ms": 1
+      }]
+  }];
+
+  try {
+      const response = await axios.post(url, data, {
+          headers: {
+              'Content-Type': 'application/json',
+              'Api-Key': apiKey,
+          },
+          httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false }) // This corresponds to the -k option in curl
+      });
+      // console.log('New Relic post response:', response.data);
+  } catch (error) {
+      console.error('Error posting New Relic metric:', error);
+  }
+}
 
 function calculateScore(timeInHours: number, likes: number) {
   // Hacker News algorithm
-  return likes / Math.pow(timeInHours + 2, 1.8);
+  return likes / Math.pow(timeInHours + 2, 2.0);
 }
 
 async function refreshScores(ctx: AppContext, agent: BskyAgent) {
+  incrementMetric(REFRESH_METRIC);
   // Go through the database and calculate likes for each post
   const MIN_DELAY = 1000 * 60 * 6; // 6 minutes
   const currentTime = Date.now();
@@ -63,14 +107,14 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
 }
 
 async function deleteStalePosts(ctx: AppContext) {
-  // Delete all posts in the db older than 2 days with a score less than 0.1
+  // Delete all posts in the db older than 1.5 days with a score less than 0.1
   log.red("Deleting stale posts...");
   const currentTime = Date.now();
-  const TWO_DAYS = 1000 * 60 * 60 * 24 * 2;
+  const ONE_AND_A_HALF_DAYS = 1000 * 60 * 60 * 24 * 1.5;
   // const TEN_SECONDS = 1000 * 10;
   let builder = ctx.db
     .deleteFrom('post')
-    .where('first_indexed', '<', currentTime - TWO_DAYS)
+    .where('first_indexed', '<', currentTime - ONE_AND_A_HALF_DAYS)
     .where('score', '<', 0.1)
   await builder.execute();
 }
@@ -114,18 +158,8 @@ async function logPosts(ctx: AppContext, agent: BskyAgent, limit: number) {
   }
 }
 
-
-// max 15 chars
-export const shortname = "tech-vibes";
-
-// TODO: Move this to settings.json in the future
-const pinnedPosts = [
-  "at://did:plc:xcariuurag22domm7jgn4goj/app.bsky.feed.post/3l3oqdmsr272m"
-];
-let intervalsScheduled = false;
-
-
 export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyAgent) => {
+  incrementMetric(REQUEST_METRIC);
 
   if (!intervalsScheduled) {
     log.yellow("Scheduling intervals...");
