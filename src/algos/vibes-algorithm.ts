@@ -52,7 +52,6 @@ function calculateScore(timeInHours: number, likes: number) {
 }
 
 async function refreshScores(ctx: AppContext, agent: BskyAgent) {
-  incrementMetric(REFRESH_METRIC);
   // Go through the database and calculate likes for each post
   const MIN_DELAY = 1000 * 60 * 6; // 6 minutes
   const currentTime = Date.now();
@@ -101,6 +100,7 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
       .execute();
   }
   if (res.length > 0) {
+    incrementMetric(REFRESH_METRIC, res.length);
     console.log("Updated " + res.length + " score(s) at: " + new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
   }
   // logPosts(ctx, agent, 10);
