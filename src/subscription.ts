@@ -118,7 +118,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     }
     if (Date.now() - this.totalCountMetricLastUpdated > 60000) {
       this.totalCountMetricLastUpdated = Date.now();
-      incrementMetric(this.secrets, TOTAL_POSTS_METRIC, this.totalPostsCounter, 60000);
+      if (this.settings.publishMetrics !== false) {
+        incrementMetric(this.secrets, TOTAL_POSTS_METRIC, this.totalPostsCounter, 60000);
+      }
       this.totalPostsCounter = 0;
     }
 

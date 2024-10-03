@@ -26,7 +26,7 @@ const run = async () => {
 
   // (Optional) A description of your feed
   // Ex: Top trending content from the whole network
-  const description = 'Open source software 💽, game dev 🕹️, hardware hacking ⚡️, and more!\nYour one stop shop for indie tech project vibes, curating trending projects across Bluesky with a custom algorithm!\n\nUse #indietechfeed to instantly post to this feed!'
+  const description = 'Open source software 💽, game dev 🕹️, hardware hacking ⚡️, and more!\nLike this feed to join a community of indie tech vibes and to see cool projects across Bluesky!\n\nTo add your posts to the feed, just give it a follow!'
 
   // (Optional) The path to an image to be used as your feed's avatar
   // Ex: ~/path/to/avatar.jpeg

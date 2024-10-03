@@ -17,8 +17,28 @@ const secrets = require(SECRETS_PATH);
 
 const pinnedPosts = settings.pinnedPosts;
 let intervalsScheduled = false;
+let feedSubscribers: String[] = [];
+
+async function updateFeedSubscribers(agent: BskyAgent) {
+  console.log("Getting likes...");
+  const feedUri = "at://did:plc:xcariuurag22domm7jgn4goj/app.bsky.feed.generator/tech-vibes";
+  const likes = await agent.getLikes({
+    uri: feedUri,
+  }).catch((err) => {
+    console.error(err);
+    return null;
+  });
+  if (likes == null) {
+    return;
+  }
+  feedSubscribers = likes.data.likes.map((like: any) => like.actor?.did);;
+  console.log("Number of likes: " + likes.data.likes.length);
+}
 
 async function incrementMetric(metric: String, value: number = 1) {
+  if (settings.publishMetrics === false) {
+    return;
+  }
   console.log("Incrementing metric: " + metric + " by " + value);
   const url = 'https://metric-api.newrelic.com/metric/v1';
   const apiKey = secrets.newrelicKey;
@@ -46,9 +66,15 @@ async function incrementMetric(metric: String, value: number = 1) {
   }
 }
 
-function calculateScore(timeInHours: number, likes: number) {
+function calculateScore(uri: string, timeInHours: number, likes: number) {
+  const did = uri.split("/")[2];
+  if (feedSubscribers.includes(did)) {
+    // If the user has liked the feed, give the post a boost
+    likes += settings.subscriberBoost;
+    console.log("Post from subscriber: " + uri);
+  }
   // Hacker News algorithm
-  return likes / Math.pow(timeInHours + 2, 2.0);
+  return likes / Math.pow(timeInHours + 2, 2.2);
 }
 
 async function refreshScores(ctx: AppContext, agent: BskyAgent) {
@@ -82,7 +108,7 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
     const likeCount = (<any>post.data.thread.post)?.likeCount as number ?? 0;
     const repostCount = (<any>post.data.thread.post)?.repostCount as number ?? 0;
     const indexedTime = row.first_indexed;
-    const score = calculateScore((currentTime - indexedTime) / 1000 / 60 / 60, likeCount + repostCount + row.mod);
+    const score = calculateScore(row.uri, (currentTime - indexedTime) / 1000 / 60 / 60, likeCount + repostCount + row.mod);
     // console.log("Updating score for post: " + row.uri + " to " + score);
     await ctx.db.insertInto('post')
       .values({
@@ -166,6 +192,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyA
     // Schedule a refresh of scores every 15 minutes
     setInterval(() => {
       refreshScores(ctx, agent);
+      updateFeedSubscribers(agent);
     }, 1000 * 60 * 15);
 
     // Schedule a cleanup of stale posts every 2 hours
@@ -178,6 +205,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyA
 
   // Trigger a refresh asynchronously
   refreshScores(ctx, agent);
+  updateFeedSubscribers(agent);
   
   let builder = ctx.db
     .selectFrom('post')
