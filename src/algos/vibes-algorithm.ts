@@ -3,6 +3,7 @@ import { AppContext } from '../config'
 import { BskyAgent } from '@atproto/api';
 import { log } from 'console-log-colors';
 import axios from 'axios';
+import { sql } from 'kysely'
 
 // max 15 chars
 export const shortname = "tech-vibes";
@@ -74,18 +75,40 @@ function calculateScore(uri: string, timeInHours: number, likes: number) {
     console.log("Post from subscriber: " + uri);
   }
   // Hacker News algorithm
-  return likes / Math.pow(timeInHours + 2, 2.2);
+  return likes / Math.pow(timeInHours + 2, 2.8);
 }
 
+/**
+ * Go through the database and calculate scores for each post
+ */
 async function refreshScores(ctx: AppContext, agent: BskyAgent) {
-  // Go through the database and calculate likes for each post
-  const MIN_DELAY = 1000 * 60 * 6; // 6 minutes
+  const MINUTE = 1000 * 60;
+  const HOUR = 60 * MINUTE;
+  const REFRESH_INTERVALS = [
+    [5 * MINUTE, 5 * MINUTE], // Refresh posts < 5 minutes old every 5 minutes
+    [10 * MINUTE, 10 * MINUTE], // Refresh posts < 10 minutes old every 10 minutes
+    [15 * MINUTE, 15 * MINUTE], // Refresh posts < 15 minutes old every 15 minutes
+    [2 * HOUR, 30 * MINUTE], // Refresh posts < 2 hours old every 30 minutes
+    [6 * HOUR, 1 * HOUR], // Refresh posts < 6 hours old every hour
+    [12 * HOUR, 2 * HOUR], // Refresh posts < 12 hours old every 2 hours
+    [24 * HOUR, 4 * HOUR], // Refresh posts < 24 hours old every 4 hours
+    [48 * HOUR, 8 * HOUR], // Refresh posts < 48 hours old every 8 hours
+  ];
   const currentTime = Date.now();
+
   let builder = ctx.db
     .selectFrom('post')
     .selectAll()
-    .where('last_scored', '<', currentTime - MIN_DELAY)
-    .orderBy('first_indexed', 'desc')
+
+  for (const interval of REFRESH_INTERVALS) {
+    const [time, delay] = interval;
+    builder = builder.orWhere((qb) => qb
+      .where('first_indexed', '>', currentTime - time)
+      .where('last_scored', '<', currentTime - delay)
+    );
+  }
+    
+  builder.orderBy('first_indexed', 'desc');
 
   const res = await builder.execute()
 
@@ -128,19 +151,20 @@ async function refreshScores(ctx: AppContext, agent: BskyAgent) {
   if (res.length > 0) {
     incrementMetric(REFRESH_METRIC, res.length);
     console.log("Updated " + res.length + " score(s) at: " + new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
+  } else {
+    console.log("No scores to update at: " + new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
   }
   // logPosts(ctx, agent, 10);
 }
 
 async function deleteStalePosts(ctx: AppContext) {
-  // Delete all posts in the db older than 1.5 days with a score less than 0.1
+  // Delete all posts in the db older than 1 day with a score less than 0.1
   log.red("Deleting stale posts...");
   const currentTime = Date.now();
-  const ONE_AND_A_HALF_DAYS = 1000 * 60 * 60 * 24 * 1.5;
-  // const TEN_SECONDS = 1000 * 10;
+  const ONE_DAY = 1000 * 60 * 60 * 24 * 1;
   let builder = ctx.db
     .deleteFrom('post')
-    .where('first_indexed', '<', currentTime - ONE_AND_A_HALF_DAYS)
+    .where('first_indexed', '<', currentTime - ONE_DAY)
     .where('score', '<', 0.1)
   await builder.execute();
 }
@@ -199,6 +223,12 @@ export const handler = async (ctx: AppContext, params: QueryParams, agent: BskyA
     setInterval(() => {
       deleteStalePosts(ctx);
     }, 1000 * 60 * 60 * 2);
+
+    // Run the refresh once at the start
+    refreshScores(ctx, agent);
+
+    // Run the cleanup once at the start
+    deleteStalePosts(ctx);
 
     intervalsScheduled = true;
   }
