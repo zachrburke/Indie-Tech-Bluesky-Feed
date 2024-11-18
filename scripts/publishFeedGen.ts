@@ -22,11 +22,11 @@ const run = async () => {
 
   // A display name for your feed
   // Ex: What's Hot
-  const displayName = 'Indie Tech + Game Dev'
+  const displayName = 'Indie Tech Vibes'
 
   // (Optional) A description of your feed
   // Ex: Top trending content from the whole network
-  const description = 'Open source software 💽, game dev 🕹️, hardware hacking ⚡️, and more!\nLike this feed to join a community of indie tech vibes and to see cool projects across Bluesky!\n\nTo add your posts to the feed, just give it a follow!'
+  const description = "A feed focusing on people's personal projects including open source software 💽, game dev 🕹️, hardware hacking ⚡️, and more!\nLike and pin this feed to join a community of indie tech creators and to see more cool projects across Bluesky!"
 
   // (Optional) The path to an image to be used as your feed's avatar
   // Ex: ~/path/to/avatar.jpeg
