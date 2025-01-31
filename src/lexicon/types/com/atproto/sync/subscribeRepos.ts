@@ -33,7 +33,7 @@ export type Handler<HA extends HandlerAuth = never> = (
 ) => AsyncIterable<HandlerOutput>
 
 export interface Commit {
-  seq: number
+  seq: bigint
   rebase: boolean
   tooBig: boolean
   repo: string

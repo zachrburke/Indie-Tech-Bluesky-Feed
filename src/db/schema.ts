@@ -14,5 +14,5 @@ export type Post = {
 
 export type SubState = {
   service: string
-  cursor: number
+  cursor: bigint
 }

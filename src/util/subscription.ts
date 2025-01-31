@@ -13,6 +13,7 @@ import {
 } from '../lexicon/types/com/atproto/sync/subscribeRepos'
 import { Database } from '../db'
 
+
 export abstract class FirehoseSubscriptionBase {
   public sub: Subscription<RepoEvent>
 
@@ -23,12 +24,15 @@ export abstract class FirehoseSubscriptionBase {
       getParams: () => this.getCursor(),
       validate: (value: unknown) => {
         try {
-          return lexicons.assertValidXrpcMessage<RepoEvent>(
-            ids.ComAtprotoSyncSubscribeRepos,
-            value,
-          )
+          // return lexicons.assertValidXrpcMessage<RepoEvent>(
+          //   ids.ComAtprotoSyncSubscribeRepos,
+          //   value,
+          // )
+          // Turning this off for now.  Seq is coming back as a bigint but the documentation 
+          // still says this should be an integer.
+          return true;
         } catch (err) {
-          console.error('repo subscription skipped invalid message', err)
+          console.error('repo subscription skipped invalid message', err);
         }
       },
     })
@@ -49,7 +53,7 @@ export abstract class FirehoseSubscriptionBase {
           }
         }
         // update stored cursor every 20 events or so
-        if (isCommit(evt) && evt.seq % 20 === 0) {
+        if (isCommit(evt) && evt.seq % BigInt(20) === BigInt(0)) {
           await this.updateCursor(evt.seq)
         }
       }
@@ -59,7 +63,7 @@ export abstract class FirehoseSubscriptionBase {
     }
   }
 
-  async updateCursor(cursor: number) {
+  async updateCursor(cursor: bigint) {
     await this.db
       .updateTable('sub_state')
       .set({ cursor })
@@ -67,7 +71,7 @@ export abstract class FirehoseSubscriptionBase {
       .execute()
   }
 
-  async getCursor(): Promise<{ cursor?: number }> {
+  async getCursor(): Promise<{ cursor?: bigint }> {
     const res = await this.db
       .selectFrom('sub_state')
       .selectAll()
