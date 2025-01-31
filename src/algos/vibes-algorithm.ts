@@ -1,20 +1,22 @@
+import dotenv from 'dotenv';
 import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../config'
 import { BskyAgent } from '@atproto/api';
 import { log } from 'console-log-colors';
 import axios from 'axios';
 import { sql } from 'kysely'
+import { getSecrets, getSettings } from '../settings';
+
+dotenv.config();
 
 // max 15 chars
 export const shortname = "tech-vibes-zbeastly";
 
-const SETTINGS_PATH = "../settings.json";
-const SECRETS_PATH = "../secrets.json";
 const REQUEST_METRIC = "bluesky.feed.request";
 const REFRESH_METRIC = "bluesky.feed.refresh";
 
-const settings = require(SETTINGS_PATH);
-const secrets = require(SECRETS_PATH);
+const settings = getSettings();
+const secrets = getSecrets();
 
 const pinnedPosts = settings.pinnedPosts;
 let intervalsScheduled = false;

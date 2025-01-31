@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 import { AtpAgent, BlobRef } from '@atproto/api'
 import fs from 'fs/promises'
 import { ids } from '../src/lexicon/lexicons'
+import { getSecrets } from '../src/settings';
 
 const run = async () => {
   dotenv.config()
@@ -12,7 +13,7 @@ const run = async () => {
 
   // YOUR bluesky password, or preferably an App Password (found in your client settings)
   // Ex: abcd-1234-efgh-5678
-  const secrets = require('../src/secrets.json');
+  const secrets = getSecrets();
   const password = secrets.password;
 
   // A short name for the record that will show in urls

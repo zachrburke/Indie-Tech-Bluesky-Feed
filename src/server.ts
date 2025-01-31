@@ -10,6 +10,7 @@ import { createDb, Database, migrateToLatest } from './db'
 import { FirehoseSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
+import { getSecrets } from './settings'
 
 export class FeedGenerator {
   public app: express.Application
@@ -32,7 +33,7 @@ export class FeedGenerator {
 
 static async create(cfg: Config) {
     // Get secrets from secrets.json
-    const secrets = require('./secrets.json')
+    const secrets = getSecrets();
 
     const app = express()
     const db = createDb(cfg.sqliteLocation)

@@ -1,9 +1,11 @@
+import { get } from 'http';
 import {
   OutputSchema as RepoEvent,
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 import axios from 'axios';
+import { getSettings, getSecrets } from './settings';
 
 const POST_METRIC = "bluesky.feed.eligiblePosts";
 const TOTAL_POSTS_METRIC = "bluesky.feed.totalPosts";
@@ -85,15 +87,14 @@ function calculateMod(text: string, boostedKeywords: { [key: string]: number }) 
 
 export { hasMatch };
 
-
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   SETTINGS_PATH = "./settings.json";
   SECRETS_PATH = "./secrets.json";
 
   matchedCount = 0;
   totalPostsCounter = 0;
-  settings = require(this.SETTINGS_PATH);
-  secrets = require(this.SECRETS_PATH);
+  settings = getSettings();
+  secrets = getSecrets();
   keywords: string[] = [];
   partialKeywords: string[] = [];
   negativeKeywords: string[] = [];
@@ -103,7 +104,6 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
   async updateSettings() {
     this.settingsLastUpdated = Date.now();
-    this.settings = require(this.SETTINGS_PATH);
     this.keywords = this.settings.keywords.map((keyword: string) => keyword.toLowerCase());
     this.partialKeywords = this.settings.partialKeywords.map((keyword: string) => keyword.toLowerCase());
     this.negativeKeywords = this.settings.negativeKeywords.map((keyword: string) => keyword.toLowerCase());
