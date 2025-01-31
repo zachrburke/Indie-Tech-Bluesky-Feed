@@ -6,7 +6,7 @@ import axios from 'axios';
 import { sql } from 'kysely'
 
 // max 15 chars
-export const shortname = "tech-vibes";
+export const shortname = "tech-vibes-zbeastly";
 
 const SETTINGS_PATH = "../settings.json";
 const SECRETS_PATH = "../secrets.json";
