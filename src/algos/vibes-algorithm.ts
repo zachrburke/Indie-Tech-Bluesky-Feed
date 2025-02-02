@@ -10,7 +10,7 @@ import { getSecrets, getSettings } from '../settings';
 dotenv.config();
 
 // max 15 chars
-export const shortname = "tech-vibes-zbeastly";
+export const shortname = "cozy-dev-corner";
 
 const REQUEST_METRIC = "bluesky.feed.request";
 const REFRESH_METRIC = "bluesky.feed.refresh";

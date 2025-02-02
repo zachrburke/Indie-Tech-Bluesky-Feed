@@ -19,15 +19,15 @@ const run = async () => {
   // A short name for the record that will show in urls
   // Lowercase with no spaces.
   // Ex: whats-hot
-  const recordName = 'tech-vibes-zbeastly'
+  const recordName = 'cozy-dev-corner'
 
   // A display name for your feed
   // Ex: What's Hot
-  const displayName = 'Indie Test Vibes'
+  const displayName = 'Cozy Dev Corner'
 
   // (Optional) A description of your feed
   // Ex: Top trending content from the whole network
-  const description = "A feed focusing on people's personal projects including open source software 💽, game dev 🕹️, hardware hacking ⚡️, and more!\nLike and pin this feed to join a community of indie tech creators and to see more cool projects across Bluesky!  This is a fork of the original feed by idreesinc.com"
+  const description = "Take a break from the daily noise and relax here with personal projects—from open-source software 💽 to game dev 🕹️ to hardware tinkering ⚡️—in a laid-back, welcoming space. Pin this feed to connect with fellow indie creators and discover cool projects across Bluesky!"
 
   // (Optional) The path to an image to be used as your feed's avatar
   // Ex: ~/path/to/avatar.jpeg
@@ -59,13 +59,13 @@ const run = async () => {
       throw new Error('expected png or jpeg')
     }
     const img = await fs.readFile(avatar)
-    const blobRes = await agent.api.com.atproto.repo.uploadBlob(img, {
+    const blobRes = await agent.com.atproto.repo.uploadBlob(img, {
       encoding,
     })
     avatarRef = blobRes.data.blob
   }
 
-  await agent.api.com.atproto.repo.putRecord({
+  await agent.com.atproto.repo.putRecord({
     repo: agent.session?.did ?? '',
     collection: ids.AppBskyFeedGenerator,
     rkey: recordName,
@@ -77,6 +77,14 @@ const run = async () => {
       createdAt: new Date().toISOString(),
     },
   })
+
+  const feed = await agent.com.atproto.repo.getRecord({
+    repo: agent.session?.did ?? '',
+    collection: ids.AppBskyFeedGenerator,
+    rkey: recordName,
+  });
+
+  console.log('Feed created:', feed);
 
   console.log('All done 🎉')
 }
